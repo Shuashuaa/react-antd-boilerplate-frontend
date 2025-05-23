@@ -52,3 +52,17 @@ export default tseslint.config({
   },
 })
 ```
+
+# Integrate AWS Amplify/Auth
+```
+npm install aws-amplify
+npm create amplify@latest
+? Where should we create your project? (.) # press enter
+```
+
+# Implementation
+```
+import { Amplify } from "aws-amplify";
+import amplifyOutputs from './amplify_outputs.json'
+Amplify.configure(amplifyOutputs)
+```
