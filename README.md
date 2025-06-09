@@ -60,7 +60,15 @@ npm create amplify@latest
 ? Where should we create your project? (.) # press enter
 ```
 
-# Implementation
+# Deploy in Amplify
+- via github
+
+# Get the amplify_outputs.json resources
+- amplify aws
+- All apps > your project > Deployments > Deployed backend resources
+- Download amplify_outputs.json button.
+
+# Implementation the amplify_outputs.json
 ```
 import { Amplify } from "aws-amplify";
 import amplifyOutputs from './amplify_outputs.json'
