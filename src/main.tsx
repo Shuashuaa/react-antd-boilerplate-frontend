@@ -7,10 +7,10 @@ import './index.css'
 import router from './routes'
 import '@ant-design/v5-patch-for-react-19'
 
-// import { Amplify } from 'aws-amplify';
-// import outputs from '../amplify_outputs.json';
+import { Amplify } from 'aws-amplify';
+import outputs from './amplify_outputs.json';
 
-// Amplify.configure(outputs);
+Amplify.configure(outputs);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
