@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { notification, type FormProps } from 'antd';
 import { Button, Checkbox, Form, Input } from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
+import { signIn } from 'aws-amplify/auth';
+import { useNavigate } from 'react-router';
+import { getCurrentUser } from 'aws-amplify/auth';
 
 type FieldType = {
     username?: string;
@@ -11,17 +14,29 @@ type FieldType = {
 
 const handleGoogleLogin = () => {
     alert('Logging in with Google...');
-    // redirect to Google auth handler
 };
 
 const handleFacebookLogin = () => {
     alert('Logging in with Facebook...');
-    // redirect to facebook auth handler
 };
 
 export default function Login(){
 
+    const navigate = useNavigate();
+    const [loadings, setLoadings] = useState<boolean[]>([]);
     const [api, contextHolder] = notification.useNotification();
+
+    useEffect(() => {
+        const checkUser = async () => {
+            try {
+                await getCurrentUser();
+                navigate('/'); // Already logged in
+            } catch {
+                // Not logged in — do nothing
+            }
+        };
+        checkUser();
+    }, [navigate]);
 
     const openNotification = (title: string, pauseOnHover: boolean) => {
         api.open({
@@ -33,44 +48,51 @@ export default function Login(){
         })
     }
 
-    const onFinish: FormProps<FieldType>['onFinish'] = (values) => {
-        console.log('Success:', values);
-        enterLoading(0, 'Successfully Logged In!');
+    const onFinish: FormProps<FieldType>['onFinish'] = async (values) => {
+        const { username, password } = values;
+
+        enterLoading(0, true);
+        try {
+            const user = await signIn({ username: username!, password: password! });
+
+            console.log('Login success:', user);
+            openNotification('Successfully Logged In!', true);
+            navigate('/');
+        } catch (error: any) {
+            console.error('Login error:', error);
+            openNotification(error.message || 'Failed to log in', true);
+        } finally {
+            enterLoading(0, false);
+        }
     };
 
     const onFinishFailed: FormProps<FieldType>['onFinishFailed'] = (errorInfo) => {
         console.log('Failed:', errorInfo);
-        enterLoading(0, 'Failed to log in - Empty field');
+ 
+        const allErrors = errorInfo.errorFields
+            .flatMap(field => field.errors)
+            .join('\n'); 
+
+        openNotification(`Failed to log in: ${allErrors}`, true);
     };
 
-    const [loadings, setLoadings] = useState<boolean[]>([]);
-
-    const enterLoading = (index: number, title: string) => {
-        setLoadings((prevLoadings) => {
-            const newLoadings = [...prevLoadings];
-            newLoadings[index] = true;
+    const enterLoading = (index: number, state: boolean) => {
+        setLoadings((prev) => {
+            const newLoadings = [...prev];
+            newLoadings[index] = state;
             return newLoadings;
-        })
-        setTimeout(() => {
-            setLoadings((prevLoadings) => {
-                const newLoadings = [...prevLoadings];
-                newLoadings[index] = false;
-                return newLoadings;
-            })
-
-            openNotification(title, true);
-        }, 3000)
-    }
+        });
+    };
 
     return (
         <>
             <div
                 style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100vh',
                 }}
             >
 
