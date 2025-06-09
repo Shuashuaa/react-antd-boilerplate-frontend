@@ -2,80 +2,72 @@ import { useState } from 'react';
 import { notification, type FormProps } from 'antd';
 import { Button, Form, Input } from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
-import { signUp } from "aws-amplify/auth"; //confirmSignUp
+import { signUp, confirmSignUp } from 'aws-amplify/auth';
+import { useNavigate } from 'react-router';
 
 type RegisterFieldType = {
-    username?: string;
-    email?: string;
-    password?: string;
-    confirm?: string;
+  username?: string;
+  email?: string;
+  password?: string;
+  confirm?: string;
 };
 
 export default function Register() {
+    const navigate = useNavigate();
     const [api, contextHolder] = notification.useNotification();
-    // const [notificationTitle, setNotificationTitle] = useState('');
     const [loadings, setLoadings] = useState<boolean[]>([]);
+    const [needsConfirmation, setNeedsConfirmation] = useState(false);
+    const [usernameForConfirmation, setUsernameForConfirmation] = useState('');
+    const [confirmationCode, setConfirmationCode] = useState('');
 
     const openNotification = (title: string, pauseOnHover: boolean) => {
         api.open({
-            message: title,
-            description: 'This is the content of the notification. This is the content of the notification. This is the content of the notification.',
-            showProgress: true,
-            // icon: <SmileOutlined style={{ color: '#108ee9' }} />,
-            pauseOnHover,
-        })
-    }
+        message: title,
+        description: 'Please check your email or try again.',
+        pauseOnHover,
+        });
+    };
 
-    const onFinish: FormProps<RegisterFieldType>['onFinish'] = async(values) => {
-        console.log('Registration Success:', values);
-        // setNotificationTitle('Successfully Registered!');
-        enterLoading(0, 'Successfully Registered!');
-        
+    const onFinish: FormProps<RegisterFieldType>['onFinish'] = async (values) => {
         const { username, password, email } = values;
-    
+
+        enterLoading(0, true);
         try {
-            const { isSignUpComplete, userId } = await signUp({
-                username: username!,
-                password: password!,
-                options: {
-                    userAttributes: {
-                        email: email!,
-                    },
-                    autoSignIn: true,
+            const { isSignUpComplete } = await signUp({
+            username: username!,
+            password: password!,
+            options: {
+                userAttributes: {
+                email: email!,
                 },
+                autoSignIn: true,
+            },
             });
 
-            console.log('SignUp Success:', { isSignUpComplete, userId });
-            openNotification('Successfully Registered!', true);
+            console.log('SignUp Success:', { isSignUpComplete });
+
+            setUsernameForConfirmation(username!);
+            setNeedsConfirmation(true);
+            openNotification('Verification code sent to your email!', true);
         } catch (error: any) {
             console.error('SignUp Error:', error);
             openNotification(error.message || 'Registration failed.', true);
+        } finally {
+            enterLoading(0, false);
         }
-
-
     };
 
     const onFinishFailed: FormProps<RegisterFieldType>['onFinishFailed'] = (errorInfo) => {
         console.log('Registration Failed:', errorInfo);
-        // setNotificationTitle('Registration Failed - Check Fields');
-        enterLoading(0, 'Registration Failed - Check Fields');
+        openNotification(`Registration Failed: ${errorInfo}` , true);
     };
 
-    const enterLoading = (index: number, title: string) => {
+    const enterLoading = (index: number, state: boolean) => {
         setLoadings((prev) => {
             const newLoadings = [...prev];
-            newLoadings[index] = true;
+            newLoadings[index] = state;
             return newLoadings;
         });
-        setTimeout(() => {
-            setLoadings((prev) => {
-                const newLoadings = [...prev];
-                newLoadings[index] = false;
-                return newLoadings;
-            });
-
-            openNotification(title, true);
-        }, 3000);
     };
 
     const handleGoogleRegister = () => {
@@ -86,136 +78,163 @@ export default function Register() {
         alert('Signing up with Facebook...');
     };
 
+    const handleConfirmCode = async () => {
+        try {
+            await confirmSignUp({
+                username: usernameForConfirmation,
+                confirmationCode,
+            });
+            openNotification('Confirmation successful! You can now log in.', true);
+            setNeedsConfirmation(false);
+            navigate('/');
+            // openNotification('Hello!', true); hello username!
+        } catch (err: any) {
+            console.error('ConfirmSignUp Error:', err);
+            openNotification(err.message || 'Confirmation failed.', true);
+        }
+    };
+
     return (
-        <div
-        style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-        }}
-        >
-        {contextHolder}
-
-        {/* <img src="https://voidzero.dev/logo.svg" alt="company logo" width={100} /> */}
-        <h1>Register</h1>
-
-        <Form
-            name="register"
-            layout="vertical"
-            style={{
-                width: '400px',
-                backgroundColor: 'white',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-            }}
-            onFinish={onFinish}
-            onFinishFailed={onFinishFailed}
-            autoComplete="on"
-        >
-            <Form.Item<RegisterFieldType>
-                style={{ marginBottom: '12px' }}
-                label="Username"
-                name="username"
-                rules={[{ required: true, message: 'Please input your username!' }]}
-            >
-                <Input />
-            </Form.Item>
-
-            <Form.Item<RegisterFieldType>
-                style={{ marginBottom: '12px' }}
-                label="Email"
-                name="email"
-                rules={[
-                    { required: true, message: 'Please input your email!' },
-                    { type: 'email', message: 'Enter a valid email address' },
-                ]}
-            >
-                <Input />
-            </Form.Item>
-
-            <Form.Item<RegisterFieldType>
-                style={{ marginBottom: '12px' }}
-                label="Password"
-                name="password"
-                rules={[{ required: true, message: 'Please input your password!' }]}
-            >
-                <Input.Password />
-            </Form.Item>
-
-            <Form.Item<RegisterFieldType>
-                style={{ marginBottom: '12px' }}
-                label="Confirm Password"
-                name="confirm"
-                dependencies={['password']}
-                rules={[
-                    { required: true, message: 'Please confirm your password!' },
-                    ({ getFieldValue }) => ({
-                    validator(_, value) {
-                        if (!value || getFieldValue('password') === value) {
-                        return Promise.resolve();
-                        }
-                        return Promise.reject(new Error('Passwords do not match!'));
-                    },
-                    }),
-                ]}
-            >
-                <Input.Password />
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: '12px' }}>
-                <Button
-                    color="default"
-                    variant='solid'
-                    htmlType="submit"
-                    loading={loadings[0]}
-                    style={{ width: '100%' }}
-                >
-                    Register
-                </Button>
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: '12px' }}>
+        <>
+            {!needsConfirmation && (
                 <div
                     style={{
                         display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
                         alignItems: 'center',
-                        textAlign: 'center',
-                        gap: '10px'
+                        height: '100vh',
                     }}
                 >
-                    <div style={{ flex: 1, height: '1px', backgroundColor: '#d9d9d9' }} />
-                    <span style={{ whiteSpace: 'nowrap', color: '#999' }}>or</span>
-                    <div style={{ flex: 1, height: '1px', backgroundColor: '#d9d9d9' }} />
-                </div>
-            </Form.Item>
+                    {contextHolder}
+                    <h1>Register</h1>
 
-            <Form.Item>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                    <Button
-                    style={{ backgroundColor: '#db4437', color: 'white', width: '100%' }}
-                    icon={<GoogleCircleFilled />}
-                    onClick={handleGoogleRegister}
+                    <Form
+                        name="register"
+                        layout="vertical"
+                        style={{ width: '400px', backgroundColor: 'white' }}
+                        onFinish={onFinish}
+                        onFinishFailed={onFinishFailed}
+                        autoComplete="on"
                     >
-                    Google
-                    </Button>
-                    <Button
-                    style={{ backgroundColor: '#3b5998', color: 'white', width: '100%' }}
-                    icon={<FacebookFilled />}
-                    onClick={handleFacebookRegister}
-                    >
-                    Facebook
-                    </Button>
-                </div>
-            </Form.Item>
-        </Form>
+                        <Form.Item<RegisterFieldType>
+                            style={{ marginBottom: '12px' }}
+                            label="Username"
+                            name="username"
+                            rules={[{ required: true, message: 'Please input your username!' }]}
+                        >
+                            <Input />
+                        </Form.Item>
 
-        <div>
-            <span>Already have an account? </span>
-            <a href="/login">Log in</a>
-        </div>
-        </div>
+                        <Form.Item<RegisterFieldType>
+                            style={{ marginBottom: '12px' }}
+                            label="Email"
+                            name="email"
+                            rules={[
+                                { required: true, message: 'Please input your email!' },
+                                { type: 'email', message: 'Enter a valid email address' },
+                            ]}
+                        >
+                            <Input />
+                        </Form.Item>
+
+                        <Form.Item<RegisterFieldType>
+                            style={{ marginBottom: '12px' }}
+                            label="Password"
+                            name="password"
+                            rules={[{ required: true, message: 'Please input your password!' }]}
+                        >
+                            <Input.Password />
+                        </Form.Item>
+
+                        <Form.Item<RegisterFieldType>
+                            style={{ marginBottom: '12px' }}
+                            label="Confirm Password"
+                            name="confirm"
+                            dependencies={['password']}
+                            rules={[
+                            { required: true, message: 'Please confirm your password!' },
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                if (!value || getFieldValue('password') === value) {
+                                    return Promise.resolve();
+                                }
+                                return Promise.reject(new Error('Passwords do not match!'));
+                                },
+                            }),
+                            ]}
+                        >
+                            <Input.Password />
+                        </Form.Item>
+
+                        <Form.Item style={{ marginBottom: '12px' }}>
+                            <Button
+                            color="default"
+                            variant='solid'
+                            htmlType="submit"
+                            loading={loadings[0]}
+                            style={{ width: '100%' }}
+                            >
+                            Register
+                            </Button>
+                        </Form.Item>
+
+                        <Form.Item style={{ marginBottom: '12px' }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                    gap: '10px',
+                                }}
+                                >
+                                <div style={{ flex: 1, height: '1px', backgroundColor: '#d9d9d9' }} />
+                                <span style={{ whiteSpace: 'nowrap', color: '#999' }}>or</span>
+                                <div style={{ flex: 1, height: '1px', backgroundColor: '#d9d9d9' }} />
+                            </div>
+                        </Form.Item>
+
+                        <Form.Item>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                            <Button
+                                style={{ backgroundColor: '#db4437', color: 'white', width: '100%' }}
+                                icon={<GoogleCircleFilled />}
+                                onClick={handleGoogleRegister}
+                            >
+                                Google
+                            </Button>
+                            <Button
+                                style={{ backgroundColor: '#3b5998', color: 'white', width: '100%' }}
+                                icon={<FacebookFilled />}
+                                onClick={handleFacebookRegister}
+                            >
+                                Facebook
+                            </Button>
+                            </div>
+                        </Form.Item>
+                    </Form>
+
+                    <div>
+                        <span>Already have an account? </span>
+                        <a href="/login">Log in</a>
+                    </div>
+                </div>
+            )}
+
+            {needsConfirmation && (
+                <div style={{ marginTop: 24, width: 400 }}>
+                <h3>Enter Confirmation Code</h3>
+                <Input
+                    placeholder="Enter the code sent to your email"
+                    value={confirmationCode}
+                    onChange={(e) => setConfirmationCode(e.target.value)}
+                    style={{ marginBottom: 12 }}
+                />
+                <Button type="primary" onClick={handleConfirmCode} style={{ width: '100%' }}>
+                    Confirm Account
+                </Button>
+                </div>
+            )}
+        </>
     );
 }
