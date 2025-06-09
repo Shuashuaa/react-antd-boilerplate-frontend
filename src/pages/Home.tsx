@@ -1,4 +1,41 @@
+import { useEffect, useState } from 'react';
+import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { useNavigate } from 'react-router';
+
 export default function Home() {
+  const [user, setUser] = useState<{ username: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser({ username: currentUser.username });
+      } catch (error: any) {
+        console.error('Failed to fetch current user:', error);
+        navigate('/login'); // Redirect if not logged in
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
+  };
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', marginTop: '100px' }}>Loading...</div>;
+  }
+
   return (
     <div
       style={{
@@ -14,6 +51,16 @@ export default function Home() {
       }}
     >
       <h1 style={{ margin: 0 }}>Home Page</h1>
+      {user && (
+        <>
+          <p style={{ fontSize: '16px', color: '#333' }}>
+            Welcome, {user.username}!
+          </p>
+          <button onClick={handleSignOut} style={{ marginTop: '16px', padding: '8px 16px' }}>
+            Sign Out
+          </button>
+        </>
+      )}
     </div>
   );
 }
