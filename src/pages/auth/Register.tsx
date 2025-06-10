@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { notification, type FormProps } from 'antd';
 import { Button, Form, Input } from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
+import { signUp } from "aws-amplify/auth"; //confirmSignUp
 
 type RegisterFieldType = {
     username?: string;
@@ -25,11 +26,33 @@ export default function Register() {
         })
     }
 
-    const onFinish: FormProps<RegisterFieldType>['onFinish'] = (values) => {
+    const onFinish: FormProps<RegisterFieldType>['onFinish'] = async(values) => {
         console.log('Registration Success:', values);
         // setNotificationTitle('Successfully Registered!');
         enterLoading(0, 'Successfully Registered!');
-        // continue with registration
+        
+        const { username, password, email } = values;
+    
+        try {
+            const { isSignUpComplete, userId } = await signUp({
+                username: username!,
+                password: password!,
+                options: {
+                    userAttributes: {
+                        email: email!,
+                    },
+                    autoSignIn: true,
+                },
+            });
+
+            console.log('SignUp Success:', { isSignUpComplete, userId });
+            openNotification('Successfully Registered!', true);
+        } catch (error: any) {
+            console.error('SignUp Error:', error);
+            openNotification(error.message || 'Registration failed.', true);
+        }
+
+
     };
 
     const onFinishFailed: FormProps<RegisterFieldType>['onFinishFailed'] = (errorInfo) => {
