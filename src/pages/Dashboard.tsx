@@ -1,4 +1,23 @@
+import { getCurrentUser } from "@aws-amplify/auth";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
+
 export default function Home() {
+
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const checkUser = async () => {
+        try {
+            await getCurrentUser();
+            navigate('/dashboard');
+        } catch {
+            navigate('/login')
+        }
+    };
+    checkUser();
+  }, [navigate]);
+
   return (
     <div
       style={{
