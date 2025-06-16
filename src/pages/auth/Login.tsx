@@ -1,23 +1,19 @@
 import { useState, useEffect } from 'react';
-import { notification, type FormProps } from 'antd';
-import { Button, Checkbox, Form, Input } from 'antd';
+import { type FormProps, 
+    notification, 
+    Button, 
+    Checkbox, 
+    Form, 
+    Input 
+} from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
-import { signIn } from 'aws-amplify/auth';
+import { signIn, getCurrentUser } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
-import { getCurrentUser } from 'aws-amplify/auth';
 
 type FieldType = {
     username?: string;
     password?: string;
     remember?: string;
-};
-
-const handleGoogleLogin = () => {
-    alert('Logging in with Google...');
-};
-
-const handleFacebookLogin = () => {
-    alert('Logging in with Facebook...');
 };
 
 export default function Login(){
@@ -30,9 +26,9 @@ export default function Login(){
         const checkUser = async () => {
             try {
                 await getCurrentUser();
-                navigate('/'); // Already logged in
+                navigate('/');
             } catch {
-                // Not logged in — do nothing
+                navigate('/login')
             }
         };
         checkUser();
@@ -82,6 +78,14 @@ export default function Login(){
             newLoadings[index] = state;
             return newLoadings;
         });
+    };
+
+    const handleGoogleLogin = () => {
+        alert('Logging in with Google...');
+    };
+
+    const handleFacebookLogin = () => {
+        alert('Logging in with Facebook...');
     };
 
     return (
