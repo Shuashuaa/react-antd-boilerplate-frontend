@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { type FormProps, 
     notification, 
     Button, 
@@ -7,7 +7,7 @@ import { type FormProps,
     Input 
 } from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
-import { signIn, getCurrentUser } from 'aws-amplify/auth';
+import { signIn } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
 
 type FieldType = {
@@ -21,18 +21,25 @@ export default function Login(){
     const navigate = useNavigate();
     const [loadings, setLoadings] = useState<boolean[]>([]);
     const [api, contextHolder] = notification.useNotification();
+    // const [checkingAuth, setCheckingAuth] = useState(true);
 
-    useEffect(() => {
-        const checkUser = async () => {
-            try {
-                await getCurrentUser();
-                navigate('/');
-            } catch {
-                navigate('/login')
-            }
-        };
-        checkUser();
-    }, [navigate]);
+    // useEffect(() => {
+    //     const checkUser = async () => {
+    //         try {
+    //             await getCurrentUser();
+    //             navigate('/'); // >
+    //         } catch {
+    //         //
+    //         } finally {
+    //             setCheckingAuth(false);
+    //         }
+    //     };
+    //     checkUser();
+    // }, [navigate]);
+
+    // if (checkingAuth) {
+    //     return <div style={{ textAlign: 'center', marginTop: '100px' }}>Checking session...</div>;
+    // }
 
     const openNotification = (title: string, pauseOnHover: boolean) => {
         api.open({
