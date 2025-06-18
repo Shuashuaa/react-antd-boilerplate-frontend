@@ -74,3 +74,14 @@ import { Amplify } from "aws-amplify";
 import amplifyOutputs from './amplify_outputs.json'
 Amplify.configure(amplifyOutputs)
 ```
+
+# Routing Anti-Page Flashing (pre-centralization of Auth Data)
+> Upon Accessing "/ or /dashboard" home or dashboard page without authentication
+```
+routes.tsx > ProtectedRoute.tsx > Login.tsx
+```
+
+> Upon Accessing "/login or /register" login or register page with authentication
+```
+routes.tsx > authRedirectRoute.tsx > Home.tsx
+```
