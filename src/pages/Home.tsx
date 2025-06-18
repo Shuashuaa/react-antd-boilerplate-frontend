@@ -7,21 +7,35 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       const currentUser = await getCurrentUser();
+  //       setUser({ username: currentUser.username });
+  //     } catch (error: any) {
+  //       console.error('Failed to fetch current user:', error);
+  //       navigate('/login'); // Redirect if not logged in
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchUser();
+  // }, [navigate]);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const currentUser = await getCurrentUser();
         setUser({ username: currentUser.username });
       } catch (error: any) {
-        console.error('Failed to fetch current user:', error);
-        navigate('/login'); // Redirect if not logged in
+        console.error('Failed to fetch user info:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchUser();
-  }, [navigate]);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -32,9 +46,9 @@ export default function Home() {
     }
   };
 
-  if (loading) {
-    return <div style={{ textAlign: 'center', marginTop: '100px' }}>Loading...</div>;
-  }
+  // if (loading) {
+  //   return <div style={{ textAlign: 'center', marginTop: '100px' }}>Loading...</div>;
+  // }
 
   return (
     <div
