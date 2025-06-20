@@ -1,6 +1,11 @@
-import { useState } from 'react';
-import { notification, type FormProps } from 'antd';
-import { Button, Form, Input } from 'antd';
+import { useState, useEffect, use } from 'react';
+import { 
+    notification,
+    Button,
+    Form,
+    Input,
+    type FormProps 
+} from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
 import { signUp, confirmSignUp } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
@@ -20,11 +25,20 @@ export default function Register() {
     const [usernameForConfirmation, setUsernameForConfirmation] = useState('');
     const [confirmationCode, setConfirmationCode] = useState('');
 
+    useEffect(() => {
+        const storedUsername = localStorage.getItem('username-confirmation');
+        if(storedUsername){
+            setUsernameForConfirmation(storedUsername);
+            setNeedsConfirmation(true);
+            navigate(`/register/toConfirm=${storedUsername}`)
+        }
+    },[])
+
     const openNotification = (title: string, pauseOnHover: boolean) => {
         api.open({
-        message: title,
-        description: 'Please check your email or try again.',
-        pauseOnHover,
+            message: title,
+            description: 'Please check your email or try again.',
+            pauseOnHover,
         });
     };
 
@@ -34,20 +48,21 @@ export default function Register() {
         enterLoading(0, true);
         try {
             const { isSignUpComplete } = await signUp({
-            username: username!,
-            password: password!,
-            options: {
-                userAttributes: {
-                email: email!,
-                },
-                autoSignIn: true,
-            },
+                username: username!,
+                password: password!,
+                options: {
+                    userAttributes: {
+                        email: email!,
+                    },
+                    autoSignIn: true,
+                },      
             });
 
             console.log('SignUp Success:', { isSignUpComplete });
 
             setUsernameForConfirmation(username!);
             setNeedsConfirmation(true);
+            localStorage.setItem('username-confirmation', username!);
             openNotification('Verification code sent to your email!', true);
         } catch (error: any) {
             console.error('SignUp Error:', error);
@@ -86,6 +101,7 @@ export default function Register() {
             });
             openNotification('Confirmation successful! You can now log in.', true);
             setNeedsConfirmation(false);
+            localStorage.removeItem('username-confirmation');
             navigate('/');
             // openNotification('Hello!', true); hello username!
         } catch (err: any) {
@@ -222,17 +238,27 @@ export default function Register() {
             )}
 
             {needsConfirmation && (
-                <div style={{ marginTop: 24, width: 400 }}>
-                <h3>Enter Confirmation Code</h3>
-                <Input
-                    placeholder="Enter the code sent to your email"
-                    value={confirmationCode}
-                    onChange={(e) => setConfirmationCode(e.target.value)}
-                    style={{ marginBottom: 12 }}
-                />
-                <Button type="primary" onClick={handleConfirmCode} style={{ width: '100%' }}>
-                    Confirm Account
-                </Button>
+                <div 
+                    style={{ 
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems:'center',
+                        height: '100vh'
+                    }}
+                >
+                    <div style={{ width: 400 }}>
+                        <h3>Enter Confirmation Code</h3>
+                        <Input
+                            placeholder="Enter the code sent to your email"
+                            value={confirmationCode}
+                            onChange={(e) => setConfirmationCode(e.target.value)}
+                            style={{ marginBottom: 12 }}
+                        />
+                        <Button type="primary" onClick={handleConfirmCode} style={{ width: '100%' }}>
+                            Confirm Account
+                        </Button>
+                    </div>
                 </div>
             )}
         </>

@@ -3,8 +3,8 @@ import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
 
 export default function Home() {
-  const [user, setUser] = useState<{ username: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<{ username: string, email: string|undefined } | null>(null);
+  // const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // useEffect(() => {
@@ -18,6 +18,7 @@ export default function Home() {
   //     } finally {
   //       setLoading(false);
   //     }
+
   //   };
 
   //   fetchUser();
@@ -27,11 +28,15 @@ export default function Home() {
     const fetchUser = async () => {
       try {
         const currentUser = await getCurrentUser();
-        setUser({ username: currentUser.username });
+        console.log(currentUser.signInDetails?.loginId,'currentUser')
+        setUser({ 
+          username: currentUser.username,
+          email: currentUser.signInDetails?.loginId
+        });
       } catch (error: any) {
         console.error('Failed to fetch user info:', error);
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     };
     fetchUser();

@@ -7,7 +7,7 @@ import { type FormProps,
     Input 
 } from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
-import { signIn } from 'aws-amplify/auth';
+import { signIn, fetchAuthSession } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
 
 type FieldType = {
@@ -21,25 +21,6 @@ export default function Login(){
     const navigate = useNavigate();
     const [loadings, setLoadings] = useState<boolean[]>([]);
     const [api, contextHolder] = notification.useNotification();
-    // const [checkingAuth, setCheckingAuth] = useState(true);
-
-    // useEffect(() => {
-    //     const checkUser = async () => {
-    //         try {
-    //             await getCurrentUser();
-    //             navigate('/'); // >
-    //         } catch {
-    //         //
-    //         } finally {
-    //             setCheckingAuth(false);
-    //         }
-    //     };
-    //     checkUser();
-    // }, [navigate]);
-
-    // if (checkingAuth) {
-    //     return <div style={{ textAlign: 'center', marginTop: '100px' }}>Checking session...</div>;
-    // }
 
     const openNotification = (title: string, pauseOnHover: boolean) => {
         api.open({
@@ -57,8 +38,15 @@ export default function Login(){
         enterLoading(0, true);
         try {
             const user = await signIn({ username: username!, password: password! });
-
             console.log('Login success:', user);
+
+            const session = await fetchAuthSession();
+
+            if (session.tokens?.accessToken) {
+                const accessToken = session.tokens.accessToken.toString();
+                console.log('Access Token:', accessToken);
+            }
+
             openNotification('Successfully Logged In!', true);
             navigate('/');
         } catch (error: any) {

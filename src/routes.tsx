@@ -5,8 +5,8 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import ProtectedRoute from "./utils/ProtectedRoutes";
-import AuthRedirectRoute from "./utils/AuthRedirectRoute";
+import ProtectedRoute from "./components/ProtectedRoutes";
+import AuthRedirectRoute from "./components/AuthRedirectRoute";
 
 const router = createBrowserRouter([
     {
@@ -29,6 +29,7 @@ const router = createBrowserRouter([
         children: [
             { path: "login", Component: Login },
             { path: "register", Component: Register },
+            { path: "register/:username", Component: Register },
         ],
     },
     {
