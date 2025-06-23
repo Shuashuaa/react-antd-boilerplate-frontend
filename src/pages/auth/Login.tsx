@@ -7,8 +7,12 @@ import { type FormProps,
     Input 
 } from 'antd';
 import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
-import { signIn, fetchAuthSession } from 'aws-amplify/auth';
+import { signIn } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
+
+import { useDispatch } from 'react-redux';
+import { fetchUserSession } from '../../store/slices/authSlice';
+import type { AppDispatch } from '../../store';
 
 type FieldType = {
     username?: string;
@@ -19,6 +23,7 @@ type FieldType = {
 export default function Login(){
 
     const navigate = useNavigate();
+    const dispatch = useDispatch<AppDispatch>();
     const [loadings, setLoadings] = useState<boolean[]>([]);
     const [api, contextHolder] = notification.useNotification();
 
@@ -37,23 +42,24 @@ export default function Login(){
 
         enterLoading(0, true);
         try {
-            const user = await signIn({ username: username!, password: password! });
-            console.log('Login success:', user);
+            await signIn({ username: username!, password: password! });
+            openNotification('Successfully Logged In!', true);
 
-            const session = await fetchAuthSession();
-
-            if (session.tokens?.accessToken) {
-                const accessToken = session.tokens.accessToken.toString();
-                console.log('Access Token:', accessToken);
+            const result = await dispatch(fetchUserSession());
+            
+            if (fetchUserSession.fulfilled.match(result)) {
+                navigate('/');
+            } else {
+                openNotification('Failed to fetch user session after login.', true);
             }
 
-            openNotification('Successfully Logged In!', true);
-            navigate('/');
         } catch (error: any) {
             console.error('Login error:', error);
             openNotification(error.message || 'Failed to log in', true);
+
         } finally {
             enterLoading(0, false);
+
         }
     };
 

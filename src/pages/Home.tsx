@@ -1,84 +1,50 @@
-import { useEffect, useState } from 'react';
-import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
+import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch, RootState } from '../store';
+import { fetchUserSession, logoutUser } from '../store/slices/authSlice';
+
 export default function Home() {
-  const [user, setUser] = useState<{ username: string, email: string|undefined } | null>(null);
-  // const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     try {
-  //       const currentUser = await getCurrentUser();
-  //       setUser({ username: currentUser.username });
-  //     } catch (error: any) {
-  //       console.error('Failed to fetch current user:', error);
-  //       navigate('/login'); // Redirect if not logged in
-  //     } finally {
-  //       setLoading(false);
-  //     }
-
-  //   };
-
-  //   fetchUser();
-  // }, [navigate]);
+  const dispatch = useDispatch<AppDispatch>();
+  const { user, loading } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        console.log(currentUser.signInDetails?.loginId,'currentUser')
-        setUser({ 
-          username: currentUser.username,
-          email: currentUser.signInDetails?.loginId
-        });
-      } catch (error: any) {
-        console.error('Failed to fetch user info:', error);
-      } finally {
-        // setLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+    if (!user) {
+      dispatch(fetchUserSession());
+    }
+  }, [dispatch, user]);
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/login');
-    } catch (error) {
-      console.error('Sign out failed:', error);
-    }
+    await dispatch(logoutUser());
+    navigate('/login');
   };
 
-  // if (loading) {
-  //   return <div style={{ textAlign: 'center', marginTop: '100px' }}>Loading...</div>;
-  // }
-
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: '24px',
-        fontWeight: 'bold',
-        color: '#888',
-        flexDirection: 'column',
-        width: '100%',
-      }}
-    >
+    <div style={{
+      flex: 1, display: 'flex', justifyContent: 'center',
+      alignItems: 'center', fontSize: '24px', fontWeight: 'bold',
+      color: '#888', flexDirection: 'column', width: '100%',
+    }}>
       <h1 style={{ margin: 0 }}>Home Page</h1>
-      {user && (
+
+      {loading ? (
+        <p>Loading user info...</p>
+      ) : user ? (
         <>
           <p style={{ fontSize: '16px', color: '#333' }}>
             Welcome, {user.username}!
           </p>
-          <button onClick={handleSignOut} style={{ marginTop: '16px', padding: '8px 16px' }}>
+          <button
+            onClick={handleSignOut}
+            style={{ marginTop: '16px', padding: '8px 16px' }}
+          >
             Sign Out
           </button>
         </>
+      ) : (
+        <p>Not authenticated.</p>
       )}
     </div>
   );
