@@ -26,10 +26,11 @@ export default function Register() {
     const [confirmationCode, setConfirmationCode] = useState('');
 
     useEffect(() => {
-        const storedUsername = localStorage.getItem('username-confirmation');
+        const storedUsername = localStorage.getItem('UserConfirmation');
         if(storedUsername){
             setUsernameForConfirmation(storedUsername);
             setNeedsConfirmation(true);
+            openNotification('Verification Successful!', true);
             navigate(`/register/toConfirm=${storedUsername}`)
         }
     },[])
@@ -62,7 +63,7 @@ export default function Register() {
 
             setUsernameForConfirmation(username!);
             setNeedsConfirmation(true);
-            localStorage.setItem('username-confirmation', username!);
+            localStorage.setItem('UserConfirmation', username!);
             openNotification('Verification code sent to your email!', true);
         } catch (error: any) {
             console.error('SignUp Error:', error);
@@ -101,7 +102,7 @@ export default function Register() {
             });
             openNotification('Confirmation successful! You can now log in.', true);
             setNeedsConfirmation(false);
-            localStorage.removeItem('username-confirmation');
+            localStorage.removeItem('UserConfirmation');
             navigate('/');
             // openNotification('Hello!', true); hello username!
         } catch (err: any) {
