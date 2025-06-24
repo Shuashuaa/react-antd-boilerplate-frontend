@@ -19,12 +19,20 @@ export const fetchUserSession = createAsyncThunk('auth/fetchUserSession',async (
     try {
         const user = await getCurrentUser();
         const session = await fetchAuthSession();
-            
-        console.log(session.tokens?.accessToken.toString()) //
+
+        const accessToken = session.tokens?.accessToken?.toString() || null;
+        const idToken = session.tokens?.idToken?.toString() || null;
+           
+        console.log('--------- accessToken ---------')
+        console.log(accessToken) //
+        console.log('--------- idToken ---------')
+        console.log(idToken) //
+
         return {
             username: user.username,
             email: user.signInDetails?.loginId,
-            accessToken: session.tokens?.accessToken.toString() || null,
+            accessToken,
+            idToken
         };
     } catch (error: any) {
         return thunkAPI.rejectWithValue(error.message);
