@@ -4,6 +4,7 @@ import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
 export interface AuthState {
   user: { username: string; email?: string } | null;
   accessToken: string | null;
+  idToken: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -11,6 +12,7 @@ export interface AuthState {
 const initialState: AuthState = {
   user: null,
   accessToken: null,
+  idToken: null,
   loading: false,
   error: null,
 };
@@ -55,6 +57,7 @@ const authSlice = createSlice({
     clearAuthState: (state) => {
       state.user = null;
       state.accessToken = null;
+      state.idToken = null;
       state.loading = false;
       state.error = null;
     },
@@ -71,16 +74,19 @@ const authSlice = createSlice({
             email: action.payload.email 
         };
         state.accessToken = action.payload.accessToken;
+        state.idToken = action.payload.idToken;
       })
       .addCase(fetchUserSession.rejected, (state, action) => {
         state.loading = false;
         state.user = null;
         state.accessToken = null;
+        state.idToken = null;
         state.error = action.payload as string;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.accessToken = null;
+        state.idToken = null;
       });
   },
 });
