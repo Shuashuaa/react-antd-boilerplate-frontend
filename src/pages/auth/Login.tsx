@@ -46,7 +46,7 @@ export default function Login(){
             openNotification('Successfully Logged In!', true);
 
             const result = await dispatch(fetchUserSession());
-            
+
             if (fetchUserSession.fulfilled.match(result)) {
                 navigate('/');
             } else {
@@ -145,7 +145,10 @@ export default function Login(){
                         valuePropName="checked" 
                         label={null}
                     >
-                        <Checkbox>Remember me</Checkbox>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Checkbox>Remember me</Checkbox>
+                            <a href="/forgot-password">Forgot Password?</a>
+                        </div>
                     </Form.Item>
 
                     <Form.Item 
