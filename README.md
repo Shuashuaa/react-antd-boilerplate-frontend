@@ -1,87 +1,152 @@
-# React + TypeScript + Vite
+# State Management Workflow with Redux & AWS Amplify
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project uses **Redux Toolkit** for state management and **AWS Amplify** for authentication.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Workflow Diagram
 
-## Expanding the ESLint configuration
+```
+A. User Logs In via Login Form
+-
+1. signIn (Amplify)
+2. Dispatch fetchUserSession
+3. getCurrentUser + fetchAuthSession
+4. Extract Tokens & User Info
+5. Redux: Store user, accessToken, idToken
+6. Redirect to Protected Route (/)
+  
+B. Later on page refresh
+-
+1. fetchUserSession again
+2. Verify session from Amplify
+3. Update Redux State
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+C. User clicks Logout
+-
+1. dispatch logoutUser()
+2. signOut (Amplify)
+3. Clear Redux Auth State
+4. Redirect to /login
+```
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
+---
+
+## Folder Structure
+
+```
+src/
+├── pages/
+│   ├── auth/
+│   │   ├── Login.tsx         # Handles login and dispatches fetchUserSession
+│   │   └── Register.tsx
+│   ├── Home.tsx              # Protected route using session from Redux
+│   ├── Dashboard.tsx         # Same as Home
+│   └── NotFound.tsx
+│
+├── store/
+│   ├── slices/
+│   │   └── authSlice.ts      # Contains all auth-related Redux logic
+│   └── index.ts              # Configures Redux store
+│
+├── routes.tsx                # Routing setup with protected/auth redirect logic
+├── layout/                   # Layouts for protected areas
+└── components/
+    ├── ProtectedRoutes.tsx   # Guard component for auth-protected routes
+    └── AuthRedirectRoute.tsx # Redirects authenticated users away from login/register
+```
+
+---
+
+## Core Logic
+
+### Login (`Login.tsx`)
+
+```ts
+await signIn({ username, password });
+dispatch(fetchUserSession()); // Fetch tokens & user info
+```
+
+### Redux Slice (`authSlice.ts`)
+
+- `fetchUserSession`:
+  - Gets user info via `getCurrentUser()`
+  - Gets tokens via `fetchAuthSession()`
+- `logoutUser`:
+  - Calls `signOut()` and clears auth state
+
+
+
+### ProtectedRoute
+
+- Checks if user exists in Redux
+- If not, attempts `fetchUserSession`
+- Redirects unauthenticated users to `/login`
+
+  ### Home & Dashboard
+
+  - On mount, they dispatch `fetchUserSession` if no user is present.
+  - Uses `useSelector` to access Redux state.
+
+---
+
+## State Shape
+
+```ts
+interface AuthState {
+  user: { username: string; email?: string } | null;
+  accessToken: string | null;
+  idToken: string | null;
+  loading: boolean;
+  error: string | null;
+}
+```
+
+---
+
+## Redux Store Setup
+
+### `src/store/index.ts`
+
+```ts
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
   },
-})
+});
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Use the hooks:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```ts
+const dispatch = useDispatch<AppDispatch>();
+const { user, loading } = useSelector((state: RootState) => state.auth);
 ```
 
-# Integrate AWS Amplify/Auth
-```
-npm install aws-amplify
-npm create amplify@latest
-? Where should we create your project? (.) # press enter
+---
+
+## Tokens
+
+Tokens (`accessToken`, `idToken`) are extracted from `fetchAuthSession()` and stored in Redux. 
+Can be used for:
+- Calling authorized APIs (e.g., API Gateway, AppSync)
+- Validating sessions on the client
+
+---
+
+## Session Persistence
+
+- On page refresh or route change, protected pages re-check session using `fetchUserSession()`.
+- Redux keeps auth state alive during session (non-persistent across tabs unless stored in localStorage/sessionStorage).
+
+---
+
+## Logout
+
+```ts
+dispatch(logoutUser());
 ```
 
-# Deploy in Amplify
-- via github
-
-# Get the amplify_outputs.json resources
-- amplify aws
-- All apps > your project > Deployments > Deployed backend resources
-- Download amplify_outputs.json button.
-
-# Implementation the amplify_outputs.json
-```
-import { Amplify } from "aws-amplify";
-import amplifyOutputs from './amplify_outputs.json'
-Amplify.configure(amplifyOutputs)
-```
-
-# Routing Anti-Page Flashing (pre-centralization of Auth Data)
-> Upon Accessing "/ or /dashboard" home or dashboard page without authentication
-```
-routes.tsx > ProtectedRoute.tsx > Login.tsx
-```
-
-> Upon Accessing "/login or /register" login or register page with authentication
-```
-routes.tsx > authRedirectRoute.tsx > Home.tsx
-```
+- Calls `signOut()` via Amplify
+- Clears Redux state
+- Redirects to `/login`
