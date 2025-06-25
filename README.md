@@ -128,6 +128,7 @@ const { user, loading } = useSelector((state: RootState) => state.auth);
 ## Tokens
 
 Tokens (`accessToken`, `idToken`) are extracted from `fetchAuthSession()` and stored in Redux. 
+
 Can be used for:
 - Calling authorized APIs (e.g., API Gateway, AppSync)
 - Validating sessions on the client
