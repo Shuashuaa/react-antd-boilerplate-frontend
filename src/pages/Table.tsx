@@ -25,7 +25,7 @@ const columns: TableColumn<User>[] = [
 const TablePage = () => {
   return (
     <div style={{ padding: 40 }}>
-      <h2>📊 Dynamic Table Demo</h2>
+      <h2>Dynamic Table</h2>
       <BaseTable<User>
         data={userData}
         columns={columns}

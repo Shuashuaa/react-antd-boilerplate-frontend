@@ -125,7 +125,7 @@ const FormDemo = () => {
 
     return (
         <div style={{ padding: "40px" }}>
-            <h2>🧪 Dynamic Base Form Demo</h2>
+            <h2>Dynamic Form</h2>
             <BaseForm
                 formName="demoForm"
                 data={formFields}

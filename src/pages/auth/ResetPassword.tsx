@@ -29,6 +29,7 @@ export default function ResetPassword() {
             message: title,
             description: 'Error, This is the content of the notification. This is the content of the notification. This is the content of the notification.',
             showProgress: true,
+            duration: 2.5,
             // icon: <SmileOutlined style={{ color: '#108ee9' }} />,
             pauseOnHover,
         })
@@ -45,13 +46,14 @@ export default function ResetPassword() {
             });
 
             localStorage.removeItem('UserConfirmation');
-            openNotification('Success, Password has been reset. You can now log in.', true);
+            openNotification('Success, Password has been reset. You can now log in.', false);
 
             setTimeout(() => {
                 navigate('/login');
-            }, 2000);
+            }, 3400);
         } catch (error: any) {
-            openNotification('Error', error.message || 'Failed to reset password.');
+            openNotification('Error', error || 'Failed to reset password.');
+            console.log(error.message)
         } finally {
             setLoading(false);
         }
@@ -72,12 +74,61 @@ export default function ResetPassword() {
                 >
                     <Input />
                 </Form.Item>
-                <Form.Item
+                {/* <Form.Item
                     label="New Password"
                     name="newPassword"
                     rules={[
                         { required: true, message: 'Enter a new password' },
                         { min: 8, message: 'Password must be at least 8 characters' },
+                    ]}
+                >
+                    <Input.Password />
+                </Form.Item> */}
+
+                <Form.Item
+                    style={{ marginBottom: '12px' }}
+                    label="New Password"
+                    name="newPassword"
+                    rules={[
+                        { required: true, message: 'Please input your password.' },
+                        {
+                        validator: async (_, value) => {
+                            if (!value) return Promise.resolve();
+
+                            const errors = [];
+
+                            if (value.length < 8) errors.push('at least 8 characters');
+                            if (!/[A-Z]/.test(value)) errors.push('an uppercase letter');
+                            if (!/[a-z]/.test(value)) errors.push('a lowercase letter');
+                            if (!/[0-9]/.test(value)) errors.push('a number');
+                            if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) errors.push('a special character');
+
+                            if (errors.length) {
+                            return Promise.reject(new Error(`Password must contain ${errors.join(', ')}`));
+                            }
+                            return Promise.resolve();
+                        },
+                        },
+                    ]}
+                    >
+                    <Input.Password />
+                </Form.Item>
+
+                <Form.Item
+                    style={{ marginBottom: '12px' }}
+                    label="Confirm Password"
+                    name="confirm"
+                    dependencies={['newPassword']}
+                    rules={[
+                    { required: true, message: 'Please confirm your password!' },
+                    ({ getFieldValue }) => ({
+                        validator(_, value) {
+                        if (!value || getFieldValue('newPassword') === value) {
+                            return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('Passwords do not match!'));
+                        },
+                    }),
                     ]}
                 >
                     <Input.Password />
