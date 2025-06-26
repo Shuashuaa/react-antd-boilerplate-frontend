@@ -6,7 +6,7 @@ import {
     Input,
     type FormProps 
 } from 'antd';
-import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
+// import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
 import { signUp, confirmSignUp } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
 
@@ -30,15 +30,17 @@ export default function Register() {
         if(storedUsername){
             setUsernameForConfirmation(storedUsername);
             setNeedsConfirmation(true);
-            openNotification('Verification Successful!', true);
+            openNotification('Verification Successful!','You can now log in.', true);
             navigate(`/register/toConfirm=${storedUsername}`)
         }
     },[])
 
-    const openNotification = (title: string, pauseOnHover: boolean) => {
+    const openNotification = (title: string, description: string, pauseOnHover: boolean) => {
         api.open({
             message: title,
-            description: 'Please check your email or try again.',
+            description: description,
+            showProgress: true,
+            duration: 3,
             pauseOnHover,
         });
     };
@@ -64,10 +66,27 @@ export default function Register() {
             setUsernameForConfirmation(username!);
             setNeedsConfirmation(true);
             localStorage.setItem('UserConfirmation', username!);
-            openNotification('Verification code sent to your email!', true);
+            openNotification('Verification code sent!', 'Verification code sent to your email!', true);
         } catch (error: any) {
             console.error('SignUp Error:', error);
-            openNotification(error.message || 'Registration failed.', true);
+
+            if (error.name === 'InvalidPasswordException') {
+                openNotification(
+                'Password does not meet requirements',
+                (
+                    <ul>
+                    <li>Minimum 8 characters</li>
+                    <li>At least one uppercase letter</li>
+                    <li>At least one lowercase letter</li>
+                    <li>At least one number</li>
+                    <li>At least one special character (!@#$%^&* etc.)</li>
+                    </ul>
+                ) as unknown as string,
+                true
+                );
+            } else {
+                openNotification('Registration failed.', error.message, true);
+            }
         } finally {
             enterLoading(0, false);
         }
@@ -75,7 +94,7 @@ export default function Register() {
 
     const onFinishFailed: FormProps<RegisterFieldType>['onFinishFailed'] = (errorInfo) => {
         console.log('Registration Failed:', errorInfo);
-        openNotification(`Registration Failed: ${errorInfo}` , true);
+        openNotification('Registration Failed', `${errorInfo}`, true);
     };
 
     const enterLoading = (index: number, state: boolean) => {
@@ -86,13 +105,13 @@ export default function Register() {
         });
     };
 
-    const handleGoogleRegister = () => {
-        alert('Signing up with Google...');
-    };
+    // const handleGoogleRegister = () => {
+    //     alert('Signing up with Google...');
+    // };
 
-    const handleFacebookRegister = () => {
-        alert('Signing up with Facebook...');
-    };
+    // const handleFacebookRegister = () => {
+    //     alert('Signing up with Facebook...');
+    // };
 
     const handleConfirmCode = async () => {
         try {
@@ -100,19 +119,23 @@ export default function Register() {
                 username: usernameForConfirmation,
                 confirmationCode,
             });
-            openNotification('Confirmation successful! You can now log in.', true);
-            setNeedsConfirmation(false);
-            localStorage.removeItem('UserConfirmation');
-            navigate('/');
-            // openNotification('Hello!', true); hello username!
+            
+            openNotification('Confirmation successful!','You can now log in.', false);
+            setTimeout(() => {
+                localStorage.removeItem('UserConfirmation');
+                navigate('/login');
+                setNeedsConfirmation(false);
+            }, 3000);
         } catch (err: any) {
             console.error('ConfirmSignUp Error:', err);
-            openNotification(err.message || 'Confirmation failed.', true);
+            openNotification('Confirmation failed.', err.message, true);
         }
     };
 
     return (
         <>
+            {contextHolder}
+
             {!needsConfirmation && (
                 <div
                     style={{
@@ -155,12 +178,41 @@ export default function Register() {
                             <Input />
                         </Form.Item>
 
-                        <Form.Item<RegisterFieldType>
+                        {/* <Form.Item<RegisterFieldType>
                             style={{ marginBottom: '12px' }}
                             label="Password"
                             name="password"
                             rules={[{ required: true, message: 'Please input your password!' }]}
                         >
+                            <Input.Password />
+                        </Form.Item> */}
+
+                        <Form.Item<RegisterFieldType>
+                            style={{ marginBottom: '12px' }}
+                            label="Password"
+                            name="password"
+                            rules={[
+                                { required: true, message: 'Please input your password!' },
+                                {
+                                validator: async (_, value) => {
+                                    if (!value) return Promise.resolve();
+
+                                    const errors = [];
+
+                                    if (value.length < 8) errors.push('at least 8 characters');
+                                    if (!/[A-Z]/.test(value)) errors.push('an uppercase letter');
+                                    if (!/[a-z]/.test(value)) errors.push('a lowercase letter');
+                                    if (!/[0-9]/.test(value)) errors.push('a number');
+                                    if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) errors.push('a special character');
+
+                                    if (errors.length) {
+                                    return Promise.reject(new Error(`Password must contain ${errors.join(', ')}`));
+                                    }
+                                    return Promise.resolve();
+                                },
+                                },
+                            ]}
+                            >
                             <Input.Password />
                         </Form.Item>
 
@@ -196,7 +248,7 @@ export default function Register() {
                             </Button>
                         </Form.Item>
 
-                        <Form.Item style={{ marginBottom: '12px' }}>
+                        {/* <Form.Item style={{ marginBottom: '12px' }}>
                             <div
                                 style={{
                                     display: 'flex',
@@ -228,7 +280,7 @@ export default function Register() {
                                 Facebook
                             </Button>
                             </div>
-                        </Form.Item>
+                        </Form.Item> */}
                     </Form>
 
                     <div>

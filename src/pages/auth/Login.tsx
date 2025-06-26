@@ -6,7 +6,7 @@ import { type FormProps,
     Form, 
     Input 
 } from 'antd';
-import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
+// import { GoogleCircleFilled, FacebookFilled } from '@ant-design/icons';
 import { signIn } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router';
 
@@ -81,13 +81,13 @@ export default function Login(){
         });
     };
 
-    const handleGoogleLogin = () => {
-        alert('Logging in with Google...');
-    };
+    // const handleGoogleLogin = () => {
+    //     alert('Logging in with Google...');
+    // };
 
-    const handleFacebookLogin = () => {
-        alert('Logging in with Facebook...');
-    };
+    // const handleFacebookLogin = () => {
+    //     alert('Logging in with Facebook...');
+    // };
 
     return (
         <>
@@ -160,7 +160,7 @@ export default function Login(){
                         </Button>
                     </Form.Item>
 
-                    <Form.Item 
+                    {/* <Form.Item 
                         label={null}
                         style={{ marginBottom: '12px' }}
                     >
@@ -176,9 +176,9 @@ export default function Login(){
                                 <span style={{ whiteSpace: 'nowrap', color: '#999' }}>or</span>
                             <div style={{ flex: 1, height: '1px', backgroundColor: '#d9d9d9' }} />
                         </div>
-                    </Form.Item>
+                    </Form.Item> */}
 
-                    <Form.Item 
+                    {/* <Form.Item 
                         label={null}
                         style={{ marginBottom: '12px' }}
                     >
@@ -198,7 +198,7 @@ export default function Login(){
                             Facebook
                         </Button>
                         </div>
-                    </Form.Item>
+                    </Form.Item> */}
                 </Form>
                 <div style={{ marginTop: '12px' }}>
                     <span>Not registered yet? </span>
