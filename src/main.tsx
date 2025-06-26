@@ -10,7 +10,7 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 
 import { Amplify } from 'aws-amplify';
-import outputs from './amplify_outputs.json';
+import outputs from './amplify_outputs';
 
 Amplify.configure(outputs);
 
